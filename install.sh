@@ -12,6 +12,11 @@ pkill -9 pyrefly 2>/dev/null && echo "  ✅ Pyrefly killed" || echo "  ℹ️  P
 echo "Step 2: Removing Pyrefly extension..."
 rm -rf ~/.antigravity/extensions/meta.pyrefly-* 2>/dev/null && echo "  ✅ Pyrefly extension removed" || echo "  ℹ️  Pyrefly extension not found"
 
+# Create blocker file to prevent silent re-installation during updates
+touch ~/.antigravity/extensions/meta.pyrefly-blocked 2>/dev/null
+chmod 000 ~/.antigravity/extensions/meta.pyrefly-blocked 2>/dev/null
+echo "  🛡️  Blocker file created (prevents auto-reinstall)"
+
 # Step 3: Ask about other extensions
 echo ""
 echo "Step 3: Extension cleanup"
@@ -140,7 +145,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>pkill -9 pyrefly 2>/dev/null; rm -rf ~/.antigravity/extensions/meta.pyrefly-* 2>/dev/null</string>
+        <string>pkill -9 pyrefly 2>/dev/null; rm -rf ~/.antigravity/extensions/meta.pyrefly-* 2>/dev/null; touch ~/.antigravity/extensions/meta.pyrefly-blocked 2>/dev/null; chmod 000 ~/.antigravity/extensions/meta.pyrefly-blocked 2>/dev/null</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
