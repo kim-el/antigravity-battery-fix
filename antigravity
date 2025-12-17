@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Antigravity launcher with GPU acceleration enabled
+# https://github.com/kim-el/antigravity-battery-fix
+
+open -a "Antigravity" --args \
+  --disable-gpu-driver-bug-workarounds \
+  --ignore-gpu-blacklist \
+  --enable-gpu-rasterization \
+  --enable-zero-copy \
+  --enable-native-gpu-memory-buffers
