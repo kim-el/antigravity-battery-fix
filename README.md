@@ -50,10 +50,19 @@ rm -rf ~/.antigravity/extensions/meta.pyrefly-*
 # Clean from registry
 python3 << 'EOF'
 import json
-with open('$HOME/.antigravity/extensions/extensions.json', 'r') as f:
+import os
+
+json_path = os.path.expanduser("~/.antigravity/extensions/extensions.json")
+
+with open(json_path, 'r') as f:
     data = json.load(f)
-filtered = [e for e in data if 'pyrefly' not in e.get('identifier', {}).get('id', '').lower()]
-with open('$HOME/.antigravity/extensions/extensions.json', 'w') as f:
+
+filtered = [
+    e for e in data 
+    if 'pyrefly' not in e.get('identifier', {}).get('id', '').lower()
+]
+
+with open(json_path, 'w') as f:
     json.dump(filtered, f)
 EOF
 ```

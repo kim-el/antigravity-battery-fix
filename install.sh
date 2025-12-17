@@ -30,14 +30,27 @@ else
     # Just clean Pyrefly from registry
     echo "  Keeping extensions, just cleaning Pyrefly from registry..."
     if [ -f ~/.antigravity/extensions/extensions.json ]; then
-        python3 -c "
+        python3 << 'PYEOF'
 import json
-with open('$HOME/.antigravity/extensions/extensions.json', 'r') as f:
-    data = json.load(f)
-filtered = [e for e in data if 'pyrefly' not in e.get('identifier', {}).get('id', '').lower()]
-with open('$HOME/.antigravity/extensions/extensions.json', 'w') as f:
-    json.dump(filtered, f)
-" 2>/dev/null && echo "  ✅ Registry cleaned" || echo "  ⚠️  Could not clean registry"
+import os
+
+json_path = os.path.expanduser("~/.antigravity/extensions/extensions.json")
+
+try:
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+    
+    filtered = [
+        e for e in data 
+        if 'pyrefly' not in e.get('identifier', {}).get('id', '').lower()
+    ]
+    
+    with open(json_path, 'w') as f:
+        json.dump(filtered, f)
+    print("  ✅ Registry cleaned")
+except Exception as e:
+    print(f"  ⚠️  Could not clean registry: {e}")
+PYEOF
     fi
 fi
 
@@ -51,9 +64,15 @@ rm -rf "$APP_PATH" 2>/dev/null
 mkdir -p "$APP_PATH/Contents/MacOS"
 mkdir -p "$APP_PATH/Contents/Resources"
 
-# Create executable
+# Create executable - FIXED: Kill existing instance first so --args works!
 cat > "$APP_PATH/Contents/MacOS/AntigravityOptimized" << 'SCRIPT'
 #!/bin/bash
+
+# Kill existing Antigravity so --args flags are applied
+# (open -a --args only works if app is NOT already running)
+pkill -x "Electron" -f "Antigravity" 2>/dev/null
+sleep 0.5
+
 open -a "Antigravity" --args \
   --disable-gpu-driver-bug-workarounds \
   --ignore-gpu-blacklist \
@@ -82,9 +101,9 @@ cat > "$APP_PATH/Contents/Info.plist" << 'PLIST'
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleVersion</key>
-    <string>2.0</string>
+    <string>2.1</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.0</string>
+    <string>2.1</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.13</string>
     <key>LSUIElement</key>
@@ -102,15 +121,47 @@ mdimport "$APP_PATH" 2>/dev/null
 
 echo "  ✅ AntigravityOptimized.app created on Desktop"
 
+# Step 5: Optional LaunchAgent for persistence
+echo ""
+read -p "Step 5: Install auto-cleaner on login? (Prevents extension bloat after updates) [y/N]: " -n 1 -r
+echo ""
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    AGENT_PATH="$HOME/Library/LaunchAgents/com.user.antigravity-cleaner.plist"
+    
+    cat > "$AGENT_PATH" << AGENT
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.antigravity-cleaner</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>pkill -9 pyrefly 2>/dev/null; rm -rf ~/.antigravity/extensions/meta.pyrefly-* 2>/dev/null</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+AGENT
+    
+    launchctl load "$AGENT_PATH" 2>/dev/null
+    echo "  ✅ Auto-cleaner installed (runs on every login)"
+else
+    echo "  ℹ️  Skipped. Run this script again after Antigravity updates."
+fi
+
 # Done
 echo ""
 echo "=================================================="
 echo "✅ Installation complete!"
 echo ""
 echo "🚀 How to use:"
-echo "   1. Quit Antigravity if running (Cmd+Q)"
-echo "   2. Launch 'AntigravityOptimized' from Desktop or Spotlight"
-echo "   3. Drag it to your Dock for easy access"
+echo "   1. Launch 'AntigravityOptimized' from Desktop or Spotlight"
+echo "   2. Drag it to your Dock for easy access"
 echo ""
 echo "⚠️  Remember: Always launch from AntigravityOptimized,"
 echo "   not the original Antigravity app!"
