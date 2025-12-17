@@ -95,10 +95,11 @@ The flags we add:
 
 ## Tested On
 
-- macOS Sequoia 15.x
-- macOS Sonoma 14.x
-- Apple Silicon (M1/M2/M3/M4)
-- Antigravity 1.104.0
+- macOS Tahoe 26.1
+- Apple M4
+- Antigravity 1.11.17
+
+**Note:** This fix likely works on other macOS versions and Apple Silicon chips, but has only been verified on the above configuration. Please open an issue to report your results on other setups!
 
 ## Contributing
 
